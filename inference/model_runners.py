@@ -66,6 +66,13 @@ class Sampler:
         ### Select Appropriate Model ###
         ################################
 
+        if conf.inference.model_directory_path is not None:
+            model_directory = conf.inference.model_directory_path
+        else:
+            model_directory = f"{SCRIPT_DIR}/../../models"
+        
+        print(f"Reading models from {model_directory}")
+
         # Initialize inference only helper objects to Sampler
         if conf.inference.ckpt_override_path is not None:
             self.ckpt_path = conf.inference.ckpt_override_path
@@ -77,18 +84,23 @@ class Sampler:
                     # this is only used for partial diffusion
                     assert conf.diffuser.partial_T is not None, "The provide_seq input is specifically for partial diffusion"
                 if conf.scaffoldguided.scaffoldguided:
-                    self.ckpt_path=f'{SCRIPT_DIR}/../models/InpaintSeq_Fold_ckpt.pt'
+                    #self.ckpt_path=f'{SCRIPT_DIR}/../models/InpaintSeq_Fold_ckpt.pt'
+                    self.ckpt_path = f'{model_directory}/Inpainting_Fold_ckpt.pt'
                 else:
-                    self.ckpt_path = f'{SCRIPT_DIR}/../models/InpaintSeq_ckpt.pt'
+                    #self.ckpt_path = f'{SCRIPT_DIR}/../models/InpaintSeq_ckpt.pt'
+                    self.ckpt_path = f'{model_directory}/InpaintSeq_ckpt.pt'
             elif conf.ppi.hotspot_res is not None and conf.scaffoldguided.scaffoldguided is False:
                 # use complex trained model
-                self.ckpt_path = f'{SCRIPT_DIR}/../models/Complex_base_ckpt.pt'
+                #self.ckpt_path = f'{SCRIPT_DIR}/../models/Complex_base_ckpt.pt'
+                self.ckpt_path = f'{model_directory}/Complex_base_ckpt.pt'
             elif conf.scaffoldguided.scaffoldguided is True:
                 # use complex and secondary structure-guided model
-                self.ckpt_path = f'{SCRIPT_DIR}/../models/Complex_Fold_base_ckpt.pt'
+                #self.ckpt_path = f'{SCRIPT_DIR}/../models/Complex_Fold_base_ckpt.pt'
+                self.ckpt_path = f'{model_directory}/Complex_Fold_base_ckpt.pt'
             else:
                 # use default model
-                self.ckpt_path = f'{SCRIPT_DIR}/../models/Base_ckpt.pt'
+                #self.ckpt_path = f'{SCRIPT_DIR}/../models/Base_ckpt.pt'
+                self.ckpt_path = f'{model_directory}/Base_ckpt.pt'
         # for saving in trb file:
         assert self._conf.inference.trb_save_ckpt_path is None, "trb_save_ckpt_path is not the place to specify an input model. Specify in inference.ckpt_override_path"
         self._conf['inference']['trb_save_ckpt_path']=self.ckpt_path
@@ -117,7 +129,16 @@ class Sampler:
         self.potential_conf = self._conf.potentials
         self.diffuser_conf = self._conf.diffuser
         self.preprocess_conf = self._conf.preprocess
-        self.diffuser = Diffuser(**self._conf.diffuser, cache_dir=f'{SCRIPT_DIR}/../schedules')
+        #self.diffuser = Diffuser(**self._conf.diffuser, cache_dir=f'{SCRIPT_DIR}/../schedules')
+
+        if conf.inference.schedule_directory_path is not None:
+            schedule_directory = conf.inference.schedule_directory_path
+        else:
+            schedule_directory = f'{SCRIPT_DIR}/../../schedules'
+        
+        if not os.path.exists(schedule_directory):
+            os.mkdir(schedule_directory)
+        self.diffuser = Diffuser(**self._conf.diffuser, cache_dir = schedule_directory)
 
         ###########################
         ### Initialise Symmetry ###
